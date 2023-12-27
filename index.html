@@ -101,6 +101,9 @@
         .flashcard-buttons button:first-child {
             margin-right: 10px;
         }
+        .flashcard-buttons button:nth-child(2) {
+            margin-right: 10px;
+        }
         /* // in focus */
         .flashcard-buttons button:focus {
             box-shadow: 0 0 0 3px royalblue;
@@ -152,10 +155,21 @@
                 this.innerHTML = `
                     <div class="flashcard-buttons">
                         <button id="previous-flashcard">Previous</button>
+                        <button id="show-answer">Show</button>
                         <button id="next-flashcard">Next</button>
                     </div>
                 `;
                 this.querySelector("#previous-flashcard").onclick = () => this.navigateFlashcard(-1);
+                this.querySelector("#show-answer").onclick = () => {
+                    let flashcard = this.flashcards[this.currentFlashcard];
+                    if (flashcard.getAttribute("data-status") === "question") {
+                        flashcard.innerHTML = `<p data-status="answer">${flashcard.getAttribute("answer")}</p>`;
+                        flashcard.setAttribute("data-status", "answer");
+                    } else {
+                        flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
+                        flashcard.setAttribute("data-status", "question");
+                    }
+                };
                 this.querySelector("#next-flashcard").onclick = () => this.navigateFlashcard(1);
             }
 
