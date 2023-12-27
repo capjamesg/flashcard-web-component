@@ -82,6 +82,9 @@
             display: block;
             max-width: 300px;
         }
+        flashcard {
+            min-height: 150px;
+        }
         .flashcard-buttons {
             display: flex;
             justify-content: space-between;
@@ -159,16 +162,15 @@
                         <button id="next-flashcard">Next</button>
                     </div>
                 `;
+                // if "noshow" attribute is present, hide the show button
+                if (this.hasAttribute("noshow")) {
+                    this.querySelector("#show-answer").style.display = "none";
+                }
+
                 this.querySelector("#previous-flashcard").onclick = () => this.navigateFlashcard(-1);
                 this.querySelector("#show-answer").onclick = () => {
                     let flashcard = this.flashcards[this.currentFlashcard];
-                    if (flashcard.getAttribute("data-status") === "question") {
-                        flashcard.innerHTML = `<p data-status="answer">${flashcard.getAttribute("answer")}</p>`;
-                        flashcard.setAttribute("data-status", "answer");
-                    } else {
-                        flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
-                        flashcard.setAttribute("data-status", "question");
-                    }
+                    this.toggleBetweenQuestionAndAnswer(flashcard);
                 };
                 this.querySelector("#next-flashcard").onclick = () => this.navigateFlashcard(1);
             }
@@ -176,6 +178,16 @@
             navigateFlashcard(direction) {
                 this.currentFlashcard = (this.currentFlashcard + direction + this.flashcards.length) % this.flashcards.length;
                 this.setFlashcard(this.currentFlashcard);
+            }
+
+            toggleBetweenQuestionAndAnswer(flashcard) {
+                if (flashcard.getAttribute("data-status") === "question") {
+                    flashcard.innerHTML = `<p data-status="answer"><b>Question</b>: ${flashcard.getAttribute("question")}</p><p class="answer"><b>Answer</b>: ${flashcard.getAttribute("answer")}</p>`;
+                    flashcard.setAttribute("data-status", "answer");
+                } else {
+                    flashcard.innerHTML = `<p data-status="question"><b>Question</b>: ${flashcard.getAttribute("question")}</p>`;
+                    flashcard.setAttribute("data-status", "question");
+                }
             }
 
             setFlashcard(index) {
@@ -187,28 +199,14 @@
                 // let user use keyboard to toggle flashcard
                 flashcard.onkeydown = (event) => {
                     if (event.key === "Enter") {
-                        if (flashcard.getAttribute("data-status") === "question") {
-                            flashcard.innerHTML = `<p data-status="answer">${flashcard.getAttribute("answer")}</p>`;
-                            flashcard.setAttribute("data-status", "answer");
-                        } else {
-                            flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
-                            flashcard.setAttribute("data-status", "question");
-                        }
+                        this.toggleBetweenQuestionAndAnswer(flashcard);
                     }
                 };
 
-                flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
+                flashcard.innerHTML = `<p data-status="question"><b>Question</b>: ${flashcard.getAttribute("question")}</p>`;
                 flashcard.style.display = "block";
                 flashcard.setAttribute("data-status", "question");
-                flashcard.onclick = () => {
-                    if (flashcard.getAttribute("data-status") === "question") {
-                        flashcard.innerHTML = `<p data-status="answer">${flashcard.getAttribute("answer")}</p>`;
-                        flashcard.setAttribute("data-status", "answer");
-                    } else {
-                        flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
-                        flashcard.setAttribute("data-status", "question");
-                    }
-                };
+                flashcard.onclick = () => this.toggleBetweenQuestionAndAnswer(flashcard);
                 // set flashcard above buttons
                 this.insertBefore(flashcard, this.querySelector(".flashcard-buttons"));
             }
@@ -217,8 +215,8 @@
         customElements.define("flashcards-element", Flashcards);
     </script>
     <flashcards-element>
-        <flashcard question="What is the capital of France?" answer="Paris"></flashcard>
-        <flashcard question="What is the capital of Germany?" answer="Germany"></flashcard>
+        <flashcard question="What are microformats?" answer="microformats is a method to structure information on web pages with HTML. You can use microformats to mark up personal profiles, content, and more."></flashcard>
+        <flashcard question="What is h-entry used for?" answer="h-entry is used to mark up content on the web (i.e. blog posts, reviews). h-entry can be used with attributes like u-like-of to indicate the content is a reaction to another piece of content on the web."></flashcard>
     </flashcards-element>
     <footer>
         <p>Created with <span style="color: red;">&hearts;</span> by <a href="https://jamesg.blog">capjamesg</a>.</p>
