@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Web Component</title>
+    <script>
+        var greens = [3, 4];
+    </script>
+    <style>
+        * {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
+        }
+        a {
+            text-decoration: none;
+            color: royalblue;
+        }
+        quiz-element {
+            display: block;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flashcard Component</h1>
+    <p>A HTML web component for displaying flashcards on web pages.</p>
+    <template id="quiz">
+        <style>
+            * {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
+            }
+            table {
+                padding: 0;
+                margin: 0;
+            }
+            th {
+                padding: 0;
+                margin: 0;
+                width: 30px;
+                height: 30px;
+            }
+            a {
+                text-decoration: none;
+                color: royalblue;
+            }
+            td {
+                margin: 5px;
+                padding: 0;
+                padding: 3px;
+            }
+            .header {
+                background-color: lavender;
+                text-align: center;
+                padding: 10px;
+            }
+            .item {
+                background-color: #f7f7f7;
+                width: 30px;
+                height: 30px;
+                text-align: center;
+            }
+            .item span {
+                opacity: 0.5;
+            }
+            li {
+                margin-bottom: 10px;
+                border: 1px solid #ccc;
+                padding: 10px;
+            }
+            ul {
+                list-style-type: none;
+                padding: 0;
+            }
+            .explanation {
+                margin-top: 10px;
+            }
+        </style>
+    </template>
+    <style>
+        /* // flashcard button should be side by side */
+        flashcards-element {
+            display: block;
+            max-width: 300px;
+        }
+        .flashcard-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        .flashcard-buttons button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: royalblue;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 5px;
+        }
+        .flashcard-buttons button:hover {
+            background-color: #0069d9;
+        }
+        .flashcard-buttons button:first-child {
+            margin-right: 10px;
+        }
+        /* // in focus */
+        .flashcard-buttons button:focus {
+            box-shadow: 0 0 0 3px royalblue;
+        }
+        @media screen and (min-width: 768px) {
+            .flashcard-buttons button {
+                width: 48%;
+            }
+        }
+
+        flashcard {
+            max-width: 300px;
+            margin-bottom: 10px;
+            background-color: #f7f7f7;
+            padding: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        class Flashcards extends HTMLElement {
+            constructor() {
+                super();
+                this.currentFlashcard = 0;
+                this.flashcards = [];
+                this.setButtons = false;
+                this.mutationObserver = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === "childList") {
+                            console.log(mutation);
+                            mutation.addedNodes.forEach(node => {
+                                if (node.nodeName === "FLASHCARD") {
+                                    this.flashcards.push(node);
+                                }
+                            });
+                        }
+                    });
+
+                    this.setFlashcard(0);
+
+                    // stop mutation observer
+                    this.mutationObserver.disconnect();
+                });
+                this.mutationObserver.observe(this, { childList: true });            
+            }
+
+            connectedCallback() {
+                this.innerHTML = `
+                    <div class="flashcard-buttons">
+                        <button id="previous-flashcard">Previous</button>
+                        <button id="next-flashcard">Next</button>
+                    </div>
+                `;
+                this.querySelector("#previous-flashcard").onclick = () => this.navigateFlashcard(-1);
+                this.querySelector("#next-flashcard").onclick = () => this.navigateFlashcard(1);
+            }
+
+            navigateFlashcard(direction) {
+                this.currentFlashcard = (this.currentFlashcard + direction + this.flashcards.length) % this.flashcards.length;
+                this.setFlashcard(this.currentFlashcard);
+            }
+
+            setFlashcard(index) {
+                this.flashcards.forEach(flashcard => flashcard.style.display = "none");
+                let flashcard = this.flashcards[index];
+                // give flashcard keyboard focus
+                flashcard.setAttribute("tabindex", "0");
+                
+                // let user use keyboard to toggle flashcard
+                flashcard.onkeydown = (event) => {
+                    if (event.key === "Enter") {
+                        if (flashcard.getAttribute("data-status") === "question") {
+                            flashcard.innerHTML = `<p data-status="answer">${flashcard.getAttribute("answer")}</p>`;
+                            flashcard.setAttribute("data-status", "answer");
+                        } else {
+                            flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
+                            flashcard.setAttribute("data-status", "question");
+                        }
+                    }
+                };
+
+                flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
+                flashcard.style.display = "block";
+                flashcard.setAttribute("data-status", "question");
+                flashcard.onclick = () => {
+                    if (flashcard.getAttribute("data-status") === "question") {
+                        flashcard.innerHTML = `<p data-status="answer">${flashcard.getAttribute("answer")}</p>`;
+                        flashcard.setAttribute("data-status", "answer");
+                    } else {
+                        flashcard.innerHTML = `<p data-status="question">${flashcard.getAttribute("question")}</p>`;
+                        flashcard.setAttribute("data-status", "question");
+                    }
+                };
+                // set flashcard above buttons
+                this.insertBefore(flashcard, this.querySelector(".flashcard-buttons"));
+            }
+        }
+
+        customElements.define("flashcards-element", Flashcards);
+    </script>
+    <flashcards-element>
+        <flashcard question="What is the capital of France?" answer="Paris"></flashcard>
+        <flashcard question="What is the capital of Germany?" answer="Germany"></flashcard>
+    </flashcards-element>
+    <footer>
+        <p>Created with <span style="color: red;">&hearts;</span> by <a href="https://jamesg.blog">capjamesg</a>.</p>
+        <p>View the source code on <a href="https://github.com/capjamesg/webcalendar">GitHub</a>.</p>
+    </footer>
+</body>
+</html>
